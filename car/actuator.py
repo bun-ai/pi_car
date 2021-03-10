@@ -26,7 +26,9 @@ class PCA9685:
         self.channel = channel
 
         if bus_num is not None:
-            I2C.get_default_bus = bus_num
+            def get_bus():
+                return bus_num
+            I2C.get_default_bus = get_bus
 
         time.sleep(init_delay)
 

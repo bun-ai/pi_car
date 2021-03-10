@@ -1,6 +1,6 @@
 # 9865, over rides only if needed, ie. TX2..
 PCA9685_I2C_ADDR = 0x40
-# PCA9685_I2C_BUSNUM = None
+PCA9685_I2C_BUSNUM = 1
 
 # STEERING
 STEERING_CHANNEL = 1
