@@ -52,6 +52,7 @@ class Vehicle:
         self.on = True
         self.mem = Memory()
         self.parts = []
+        self.profiler = PartProfiler()
 
     def add(self, part, inputs=[], outputs=[],):
         assert type(inputs) is list, "inputs is not a list: %r" % inputs
@@ -63,6 +64,7 @@ class Vehicle:
             'outputs': outputs
         }
         self.parts.append(entry)
+        self.profiler.profile_part(part)
 
     def remove(self, part):
         """
@@ -130,6 +132,8 @@ class Vehicle:
         while self.on:
             start_time = time.time()
             loop_count += 1
+
+            self.update_parts()
 
             if max_loop_count and (loop_count > max_loop_count):
                 self.on = False
