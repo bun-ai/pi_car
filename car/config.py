@@ -57,3 +57,4 @@ def load_config(config_path=None, myconfig='myconfig.py'):
         cfg.from_object(personal_cfg)
     else:
         print("personal config: file not found ", personal_cfg_path)
+    return cfg
