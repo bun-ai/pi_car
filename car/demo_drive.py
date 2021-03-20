@@ -1,5 +1,8 @@
 import os
 import types
+import time
+
+import Adafruit_PCA9685
 
 
 class Config:
@@ -58,3 +61,59 @@ def load_config(config_path=None, myconfig='myconfig.py'):
     else:
         print("personal config: file not found ", personal_cfg_path)
     return cfg
+
+
+def demo_servo(pwm, cfg):
+    # Move servo on channel O between extremes.
+    print(f"Moving servo on channel {cfg.STEERING_CHANNEL}, press Ctrl-C to quit...")
+
+    mid_angle = int((cfg.STEERING_RIGHT_PWM - cfg.STEERING_LEFT_PWM) / 2 + cfg.STEERING_LEFT_PWM)
+    step_angle = int((cfg.STEERING_RIGHT_PWM - cfg.STEERING_LEFT_PWM) / 7 // 1)
+    pwm.set_pwm(cfg.STEERING_CHANNEL, 0, mid_angle)
+    time.sleep(2)
+
+    print("Servo demonstration - start")
+    try:
+        for angle in range(cfg.STEERING_LEFT_PWM, cfg.STEERING_RIGHT_PWM + 1, step_angle):
+            # print('angle', angle)
+            pwm.set_pwm(cfg.STEERING_CHANNEL, 0, angle)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Demonstration stopped! Moving servo to middle position.")
+        pwm.set_pwm(cfg.STEERING_CHANNEL, 0, mid_angle)
+
+    pwm.set_pwm(cfg.STEERING_CHANNEL, 0, mid_angle)
+    print("Servo demonstration - Done")
+
+
+def demo_throttle(pwm, cfg):
+    # Move servo on channel O between extremes.
+    print(f"Moving throttle on channel {cfg.THROTTLE_CHANNEL}, press Ctrl-C to quit...")
+
+    pwm.set_pwm(cfg.THROTTLE_CHANNEL, 0, cfg.THROTTLE_STOPPED_PWM)
+    time.sleep(1)
+
+    print("Throttle demonstration - start")
+    try:
+        print("Moving forward")
+        for throttle in range(cfg.THROTTLE_STOPPED_PWM, cfg.THROTTLE_FORWARD_PWM, 5):
+            # print('throttle', throttle)
+            pwm.set_pwm(cfg.THROTTLE_CHANNEL, 0, throttle)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Demonstration stopped!")
+        pwm.set_pwm(cfg.THROTTLE_CHANNEL, 0, cfg.THROTTLE_STOPPED_PWM)
+
+    pwm.set_pwm(cfg.THROTTLE_CHANNEL, 0, cfg.THROTTLE_STOPPED_PWM)
+    print("Throttle demonstration - Done")
+
+
+if __name__ == '__main__':
+    pwm = Adafruit_PCA9685.PCA9685()
+    pwm.set_pwm_freq(60)
+
+    cfg = load_config()
+
+    demo_servo(pwm, cfg)
+
+    demo_throttle(pwm, cfg)
