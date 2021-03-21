@@ -1,7 +1,7 @@
-from car.actuator import PCA9685, PWMSteering, PWMThrottle
+from unused.actuator import PCA9685, PWMSteering, PWMThrottle
 from car.config import load_config
 
-from car.vehicle import Vehicle
+from unused.vehicle import Vehicle
 
 
 def demo_drive(cfg):

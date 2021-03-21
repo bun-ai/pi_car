@@ -3,7 +3,7 @@ import numpy as np
 
 from prettytable import PrettyTable
 
-from car.memory import Memory
+from unused.memory import Memory
 
 
 class PartProfiler:

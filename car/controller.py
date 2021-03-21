@@ -2,15 +2,9 @@ import os
 import array
 import time
 import struct
-import random
-from threading import Thread
 import logging
 
 from prettytable import PrettyTable
-
-# import for syntactical ease
-# from donkeycar.parts.web_controller.web import LocalWebController
-# from donkeycar.parts.web_controller.web import WebFpv
 
 
 class Joystick(object):
