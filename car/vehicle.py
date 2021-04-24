@@ -19,6 +19,8 @@ class Vehicle:
         """
         if inputs is None:
             inputs = []
+        if outputs is None:
+            outputs = []
         assert type(inputs) is list, "inputs is not a list: %r" % inputs
         assert type(outputs) is list, "outputs is not a list: %r" % outputs
         assert type(threaded) is bool, "threaded is not a boolean: %r" % threaded
