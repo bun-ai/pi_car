@@ -1,12 +1,18 @@
 import time
 import traceback
+from threading import Thread
+from car.memory import Memory
 
 
 class Vehicle:
-    def __init__(self):
+    def __init__(self, mem=None):
         self.on = True
+
+        if not mem:
+            mem = Memory()
+
         self.parts = []
-        self.mem = {}
+        self.mem = mem
 
     def add(self, part, inputs=None, outputs=None, threaded=False, run_condition=None):
         """
@@ -33,6 +39,12 @@ class Vehicle:
             'outputs': outputs,
             'run_condition': run_condition,
         }
+
+        if threaded:
+            t = Thread(target=part.update, args=())
+            t.daemon = True
+            entry['thread'] = t
+
         self.parts.append(entry)
 
     def update_parts(self):
@@ -51,7 +63,7 @@ class Vehicle:
                 # get part
                 p = entry['part']
                 # start timing part run
-                self.profiler.on_part_start(p)
+                # self.profiler.on_part_start(p)
                 # get inputs from memory
                 inputs = self.mem.get(entry['inputs'])
                 # run the part
@@ -78,7 +90,7 @@ class Vehicle:
             loop_count = 0
 
             while self.on:
-                start_time = time()
+                start_time = time.time()
                 loop_count += 1
 
                 self.update_parts()
