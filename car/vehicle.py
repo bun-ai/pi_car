@@ -1,4 +1,5 @@
 import time
+import traceback
 
 
 class Vehicle:
@@ -32,7 +33,7 @@ class Vehicle:
         }
         self.parts.append(entry)
 
-    def update(self):
+    def update_parts(self):
         """
         loop over all parts
         """
@@ -61,20 +62,39 @@ class Vehicle:
                 if outputs is not None:
                     self.mem.put(entry['outputs'], outputs)
                 # finish timing part run
-                self.profiler.on_part_finished(p)
+                # self.profiler.on_part_finished(p)
 
-    def start(self, rate_hz=10):
-        self.on = True
+    def start(self, rate_hz=10, max_loop_count=None):
+        try:
+            self.on = True
 
-        # run all entries
+            for entry in self.parts:
+                if entry.get('thread'):
+                    # start the update thread
+                    entry.get('thread').start()
 
-        loop_count = 0
+            loop_count = 0
 
-        while self.on:
-            start_time = time()
-            loop_count += 1
+            while self.on:
+                start_time = time()
+                loop_count += 1
 
-            self.update()
+                self.update_parts()
+
+                # stop drive loop if loop_count exceeds max_loop_count
+                if max_loop_count and loop_count > max_loop_count:
+                    self.on = False
+
+                sleep_time = 1.0 / rate_hz - (time.time() - start_time)
+                if sleep_time > 0.0:
+                    time.sleep(sleep_time)
+
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            traceback.print_exc()
+        finally:
+            self.stop()
 
     def stop(self):
         print('Shutting down vehicle and its parts...')
