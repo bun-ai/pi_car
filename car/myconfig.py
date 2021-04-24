@@ -15,7 +15,7 @@ THROTTLE_REVERSE_PWM = 330
 
 # VEHICLE
 DRIVE_LOOP_HZ = 20
-MAX_LOOPS = 60
+MAX_LOOPS = 220
 
 # JOYSTICK
 USE_JOYSTICK_AS_DEFAULT = True  # when starting the manage.py, when True, will not require a --js option to use the joystick
@@ -33,7 +33,7 @@ JOYSTICK_DEVICE_FILE = "/dev/input/js0"     # this is the unix file use to acces
 # CAMERA
 CAMERA_TYPE = 'PICAM'   # (PICAM|WEBCAM|CVCAM|CSIC|V4L|D435|MOCK|IMAGE_LIST)
 IMAGE_W = 160
-IMAGE_H = 120
+IMAGE_H = 128
 IMAGE_DEPTH = 3         # default RGB=3, make 1 for mono
 CAMERA_FRAMERATE = DRIVE_LOOP_HZ
 CAMERA_VFLIP = False

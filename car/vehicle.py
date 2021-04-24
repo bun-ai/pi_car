@@ -57,7 +57,7 @@ class Vehicle:
             # check run condition, if it exists
             if entry.get('run_condition'):
                 run_condition = entry.get('run_condition')
-                # run = self.mem.get([run_condition])[0]
+                run = self.mem.get([run_condition])[0]
 
             if run:
                 # get part

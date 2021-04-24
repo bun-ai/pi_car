@@ -44,12 +44,12 @@ def drive(cfg):
                            zero_pulse=cfg.THROTTLE_STOPPED_PWM,
                            min_pulse=cfg.THROTTLE_REVERSE_PWM)
 
-    car.add(steering, inputs=['angle'])
-    car.add(throttle, inputs=['throttle'])
+    car.add(steering, inputs=['user/angle'])
+    car.add(throttle, inputs=['user/throttle'])
 
     # todo add tub to save data
 
-    car.start(rate_hz=cfg.DRIVE_LOOP_HZ, max_loop_count=cfg.MAX_LOOPS)
+    car.start(rate_hz=cfg.DRIVE_LOOP_HZ)
 
 
 if __name__ == '__main__':
