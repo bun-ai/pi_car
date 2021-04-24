@@ -1448,7 +1448,7 @@ def get_js_controller(cfg):
     else:
         raise (Exception("Unknown controller type: " + cfg.CONTROLLER_TYPE))
 
-    ctr = cont_class(
+    ctrl = cont_class(
         throttle_dir=cfg.JOYSTICK_THROTTLE_DIR,
         throttle_scale=cfg.JOYSTICK_MAX_THROTTLE,
         steering_scale=cfg.JOYSTICK_STEERING_SCALE,
@@ -1456,12 +1456,12 @@ def get_js_controller(cfg):
         dev_fn=cfg.JOYSTICK_DEVICE_FILE,
     )
 
-    ctr.set_deadzone(cfg.JOYSTICK_DEADZONE)
-    return ctr
+    ctrl.set_deadzone(cfg.JOYSTICK_DEADZONE)
+    return ctrl
 
 
 if __name__ == "__main__":
-    # Testing the XboxOneJoystickController
+    # Testing the PS4JoystickController
     js = PS4Joystick("/dev/input/js0")
     js.init()
 

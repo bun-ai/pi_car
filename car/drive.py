@@ -1,6 +1,6 @@
 from car.actuator import PCA9685, PWMSteering, PWMThrottle
 from car.config import load_config
-
+from car.camera import PiCamera
 from car.vehicle import Vehicle
 from car.controller import get_js_controller
 
@@ -12,13 +12,12 @@ def drive(cfg):
 
     # add camera
     if cfg.CAMERA_TYPE == "PICAM":
-        from car.camera import PiCamera
         cam = PiCamera(image_w=cfg.IMAGE_W,
-                       image_h=cfg.IMAGE_H,
-                       image_d=cfg.IMAGE_DEPTH,
-                       framerate=cfg.CAMERA_FRAMERATE,
-                       vflip=cfg.CAMERA_VFLIP,
-                       hflip=cfg.CAMERA_HFLIP)
+                       image_h=cfg.IMAGE_H,)
+                       # image_d=cfg.IMAGE_DEPTH,
+                       # framerate=cfg.CAMERA_FRAMERATE,
+                       # vflip=cfg.CAMERA_VFLIP,
+                       # hflip=cfg.CAMERA_HFLIP)
     else:
         raise (Exception("Unkown camera type: %s" % cfg.CAMERA_TYPE))
 
