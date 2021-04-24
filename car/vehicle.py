@@ -7,7 +7,7 @@ class Vehicle:
         self.parts = []
         self.mem = {}
 
-    def add(self, part, inputs=None, outputs=None, run_condition=None):
+    def add(self, part, inputs=None, outputs=None, threaded=False, run_condition=None):
         """
 
         :param part:
@@ -20,6 +20,7 @@ class Vehicle:
             inputs = []
         assert type(inputs) is list, "inputs is not a list: %r" % inputs
         assert type(outputs) is list, "outputs is not a list: %r" % outputs
+        assert type(threaded) is bool, "threaded is not a boolean: %r" % threaded
 
         p = part
         print('Adding part {}.'.format(p.__class__.__name__))
