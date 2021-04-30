@@ -314,11 +314,13 @@ class PS3Joystick(Joystick):
             0x04: "right_stick_vert",
             0x02: "L2_pressure",
             0x05: "R2_pressure",
+            0x11: "dpad_up_down",  # d 544
+            0x10: "dpad_left_right",  # f 546
         }
 
         self.button_names = {
-            0x13A: "select",  # 8 314
-            0x13B: "start",  # 9 315
+            0x13A: "share",  # 8 314
+            0x13B: "options",  # 9 315
             0x13C: "PS",  # a  316
             0x136: "L1",  # 4 310
             0x137: "R1",  # 5 311
@@ -330,10 +332,6 @@ class PS3Joystick(Joystick):
             0x131: "circle",  # 1 305
             0x130: "cross",  # 0 304
             0x134: "square",  # 3 308
-            0x220: "dpad_up",  # d 544
-            0x221: "dpad_down",  # e 545
-            0x222: "dpad_left",  # f 546
-            0x223: "dpad_right",  # 10 547
         }
 
 
@@ -753,6 +751,30 @@ class JoystickController(object):
             except:
                 print("failed to erase")
 
+    def on_axis_dpad_left_right(self, val):
+        if val == -1.0:
+            self.on_dpad_left()
+        elif val == 1.0:
+            self.on_dpad_right()
+
+    def on_axis_dpad_up_down(self, val):
+        if val == -1.0:
+            self.on_dpad_up()
+        elif val == 1.0:
+            self.on_dpad_down()
+
+    def on_dpad_up(self):
+        self.increase_max_throttle()
+
+    def on_dpad_down(self):
+        self.decrease_max_throttle()
+
+    def on_dpad_left(self):
+        print("dpad left un-mapped")
+
+    def on_dpad_right(self):
+        print("dpad right un-mapped")
+
     def on_throttle_changes(self):
         """
         turn on recording when non zero throttle in the user mode.
@@ -998,13 +1020,11 @@ class PS3JoystickController(JoystickController):
         """
 
         self.button_down_trigger_map = {
-            "select": self.toggle_mode,
+            "options": self.toggle_mode,
             "circle": self.toggle_manual_recording,
             "triangle": self.erase_last_n_records,
             "cross": self.emergency_stop,
-            "dpad_up": self.increase_max_throttle,
-            "dpad_down": self.decrease_max_throttle,
-            "start": self.toggle_constant_throttle,
+            "share": self.toggle_constant_throttle,
             "R1": self.chaos_monkey_on_right,
             "L1": self.chaos_monkey_on_left,
         }
@@ -1017,6 +1037,7 @@ class PS3JoystickController(JoystickController):
         self.axis_trigger_map = {
             "left_stick_horz": self.set_steering,
             "right_stick_vert": self.set_throttle,
+            "dpad_up_down": self.on_axis_dpad_up_down,
         }
 
 
@@ -1213,17 +1234,17 @@ class LogitechJoystickController(JoystickController):
         self.axis_trigger_map = {
             "left_stick_horz": self.set_steering,
             "right_stick_vert": self.set_throttle,
-            "dpad_leftright": self.on_axis_dpad_LR,
-            "dpad_up_down": self.on_axis_dpad_UD,
+            "dpad_leftright": self.on_axis_dpad_left_right,
+            "dpad_up_down": self.on_axis_dpad_up_down,
         }
 
-    def on_axis_dpad_LR(self, val):
+    def on_axis_dpad_left_right(self, val):
         if val == -1.0:
             self.on_dpad_left()
         elif val == 1.0:
             self.on_dpad_right()
 
-    def on_axis_dpad_UD(self, val):
+    def on_axis_dpad_up_down(self, val):
         if val == -1.0:
             self.on_dpad_up()
         elif val == 1.0:
