@@ -31,6 +31,7 @@ def drive(cfg):
             inputs=['cam/image_array'],
             outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
             threaded=True)
+    ctrl.print_controls()
 
     # add steering and throttle
     steering_controller = PCA9685(cfg.STEERING_CHANNEL, cfg.PCA9685_I2C_ADDR, bus_num=cfg.PCA9685_I2C_BUSNUM)

@@ -125,7 +125,7 @@ class PWMThrottle:
     values to PWM pulses.
     """
 
-    def __init__(self, controller=None, max_pulse=330, min_pulse=420, zero_pulse=380):
+    def __init__(self, controller=None, max_pulse=420, min_pulse=330, zero_pulse=380):
 
         self.MIN_THROTTLE = -1
         self.MAX_THROTTLE = 1

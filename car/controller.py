@@ -744,7 +744,8 @@ class JoystickController(object):
     def set_tub(self, tub):
         self.tub = tub
 
-    def erase_last_N_records(self):
+    def erase_last_n_records(self):
+        print('erase button')
         if self.tub is not None:
             try:
                 self.tub.delete_last_n_records(self.num_records_to_erase)
@@ -810,13 +811,13 @@ class JoystickController(object):
 
     def set_steering(self, axis_val):
         self.angle = self.steering_scale * axis_val
-        # print("angle", self.angle)
+        print("angle", self.angle)
 
     def set_throttle(self, axis_val):
         # this value is often reversed, with positive value when pulling down
         self.last_throttle_axis_val = axis_val
         self.throttle = self.throttle_dir * axis_val * self.throttle_scale
-        # print("throttle", self.throttle)
+        print("throttle", self.throttle)
         self.on_throttle_changes()
 
     def toggle_manual_recording(self):
@@ -999,7 +1000,7 @@ class PS3JoystickController(JoystickController):
         self.button_down_trigger_map = {
             "select": self.toggle_mode,
             "circle": self.toggle_manual_recording,
-            "triangle": self.erase_last_N_records,
+            "triangle": self.erase_last_n_records,
             "cross": self.emergency_stop,
             "dpad_up": self.increase_max_throttle,
             "dpad_down": self.decrease_max_throttle,
@@ -1048,7 +1049,7 @@ class PS4JoystickController(JoystickController):
         self.button_down_trigger_map = {
             "share": self.toggle_mode,
             "circle": self.toggle_manual_recording,
-            "triangle": self.erase_last_N_records,
+            "triangle": self.erase_last_n_records,
             "cross": self.emergency_stop,
             "L1": self.increase_max_throttle,
             "R1": self.decrease_max_throttle,
@@ -1128,7 +1129,7 @@ class XboxOneJoystickController(JoystickController):
         self.button_down_trigger_map = {
             "a_button": self.toggle_mode,
             "b_button": self.toggle_manual_recording,
-            "x_button": self.erase_last_N_records,
+            "x_button": self.erase_last_n_records,
             "y_button": self.emergency_stop,
             "right_shoulder": self.increase_max_throttle,
             "left_shoulder": self.decrease_max_throttle,
@@ -1197,7 +1198,7 @@ class LogitechJoystickController(JoystickController):
         self.button_down_trigger_map = {
             "start": self.toggle_mode,
             "B": self.toggle_manual_recording,
-            "Y": self.erase_last_N_records,
+            "Y": self.erase_last_n_records,
             "A": self.emergency_stop,
             "back": self.toggle_constant_throttle,
             "R1": self.chaos_monkey_on_right,
@@ -1260,7 +1261,7 @@ class NimbusController(JoystickController):
         # init set of mapping from buttons to function calls
 
         self.button_down_trigger_map = {
-            "y": self.erase_last_N_records,
+            "y": self.erase_last_n_records,
             "b": self.toggle_mode,
             "a": self.emergency_stop,
         }
@@ -1290,7 +1291,7 @@ class WiiUController(JoystickController):
         # init set of mapping from buttons to function calls
 
         self.button_down_trigger_map = {
-            "Y": self.erase_last_N_records,
+            "Y": self.erase_last_n_records,
             "B": self.toggle_mode,
             "A": self.emergency_stop,
         }
@@ -1328,7 +1329,7 @@ class RC3ChanJoystickController(JoystickController):
 
     def on_switch_up(self):
         if self.mode == "user":
-            self.erase_last_N_records()
+            self.erase_last_n_records()
         else:
             self.emergency_stop()
 
@@ -1461,8 +1462,8 @@ def get_js_controller(cfg):
 
 
 if __name__ == "__main__":
-    # Testing the PS4JoystickController
-    js = PS4Joystick("/dev/input/js0")
+    # Testing the PS3JoystickController
+    js = PS3Joystick("/dev/input/js0")
     js.init()
 
     while True:
