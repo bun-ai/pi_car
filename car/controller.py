@@ -1080,7 +1080,8 @@ class PS4JoystickController(JoystickController):
         }
 
         self.button_up_trigger_map = {
-            # "PS": self.toggle_constant_throttle,
+            "R1": self.chaos_monkey_off,
+            "L1": self.chaos_monkey_off,
         }
 
         self.axis_trigger_map = {

@@ -3,7 +3,8 @@ from car.config import load_config
 from car.camera import PiCamera
 from car.vehicle import Vehicle
 from car.controller import get_js_controller
-
+from car.tub import TubWriter, TubHandler
+w
 
 def drive(cfg):
     car = Vehicle()
@@ -48,7 +49,16 @@ def drive(cfg):
     car.add(steering, inputs=['user/angle'])
     car.add(throttle, inputs=['user/throttle'])
 
-    # todo add tub to save data
+    # add tub to save data
+    inputs = ['cam/image_array', 'user/angle', 'user/throttle', 'user/mode']
+    types = ['image_array', 'float', 'float', 'str']
+    # do we want to store new records into own dir or append to existing
+    tub_path = TubHandler(path=cfg.DATA_PATH).create_tub_path() if cfg.AUTO_CREATE_NEW_TUB else cfg.DATA_PATH
+    print('tub_path: ', cfg.DATA_PATH)
+
+    tub_writer = TubWriter(base_path=tub_path, inputs=inputs, types=types)
+    car.add(tub_writer, inputs=inputs, outputs=["tub/num_records"],
+            run_condition='recording')
 
     car.start(rate_hz=cfg.DRIVE_LOOP_HZ)
 

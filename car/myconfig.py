@@ -1,3 +1,10 @@
+import os
+
+# PATHS
+CAR_PATH = PACKAGE_PATH = os.path.dirname(os.path.realpath(__file__))
+DATA_PATH = os.path.join(CAR_PATH, 'data')
+MODELS_PATH = os.path.join(CAR_PATH, 'models')
+
 # 9865, over rides only if needed, ie. TX2..
 PCA9685_I2C_ADDR = 0x40
 PCA9685_I2C_BUSNUM = 1
@@ -38,3 +45,7 @@ IMAGE_DEPTH = 3         # default RGB=3, make 1 for mono
 CAMERA_FRAMERATE = DRIVE_LOOP_HZ
 CAMERA_VFLIP = False
 CAMERA_HFLIP = False
+
+# RECORD OPTIONS
+RECORD_DURING_AI = False
+AUTO_CREATE_NEW_TUB = False     # create a new tub (tub_YY_MM_DD) directory when recording or append records to data directory directly
