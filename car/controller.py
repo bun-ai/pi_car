@@ -346,10 +346,12 @@ class PS4Joystick(Joystick):
         self.axis_names = {
             0x00: "left_stick_horz",
             0x01: "left_stick_vert",
+            0x02: "L2_pressure",
+            0x05: "R2_pressure",
             0x03: "right_stick_horz",
             0x04: "right_stick_vert",
-            0x10: "dpad_leftright",
-            0x11: "dpad_updown",
+            0x10: "dpad_left_right",
+            0x11: "dpad_up_down",
             0x19: "tilt_a",
             0x1A: "tilt_b",
             0x1B: "tilt_c",
@@ -359,14 +361,10 @@ class PS4Joystick(Joystick):
         }
 
         self.button_names = {
-            0x02: "L2",
-            0x05: "R2",
             0x130: "cross",
             0x131: "circle",
-            0x132: "circle",
             0x133: "triangle",
             0x134: "square",
-            0x135: "R1",
             0x136: "L1",
             0x137: "R1",
             0x13A: "share",
@@ -651,7 +649,7 @@ class JoystickController(object):
         poll_delay=0.0,
         throttle_scale=1.0,
         steering_scale=1.0,
-        throttle_dir=-1.0,
+        throttle_dir=1.0,
         dev_fn="/dev/input/js0",
         auto_record_on_throttle=True,
     ):
@@ -674,7 +672,7 @@ class JoystickController(object):
         self.num_records_to_erase = 100
         self.estop_state = self.ES_IDLE
         self.chaos_monkey_steering = None
-        self.dead_zone = 0.0
+        self.dead_zone = 0.1
 
         self.button_down_trigger_map = {}
         self.button_up_trigger_map = {}
@@ -759,6 +757,8 @@ class JoystickController(object):
             self.on_dpad_right()
 
     def on_axis_dpad_up_down(self, val):
+        print("throttle_scale:", self.throttle_scale)
+
         if val == -1.0:
             self.on_dpad_up()
         elif val == 1.0:
@@ -1070,19 +1070,18 @@ class PS4JoystickController(JoystickController):
         """
 
         self.button_down_trigger_map = {
-            "options": self.toggle_mode,
+            "PS": self.toggle_mode,
             "circle": self.toggle_manual_recording,
             "triangle": self.erase_last_n_records,
+            "square": self.toggle_constant_throttle,
             "cross": self.emergency_stop,
-            "share": self.toggle_constant_throttle,
             "R1": self.chaos_monkey_on_right,
             "L1": self.chaos_monkey_on_left,
         }
 
-        # self.button_up_trigger_map = {
-        #     "R1": self.chaos_monkey_off,
-        #     "L1": self.chaos_monkey_off,
-        # }
+        self.button_up_trigger_map = {
+            # "PS": self.toggle_constant_throttle,
+        }
 
         self.axis_trigger_map = {
             "left_stick_horz": self.set_steering,
@@ -1492,7 +1491,7 @@ def get_js_controller(cfg):
 
 if __name__ == "__main__":
     # Testing the PS3JoystickController
-    js = PS3Joystick("/dev/input/js0")
+    js = PS4Joystick("/dev/input/js0")
     js.init()
 
     while True:
