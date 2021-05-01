@@ -742,13 +742,12 @@ class JoystickController(object):
         self.tub = tub
 
     def erase_last_n_records(self):
-        print('erase button')
         if self.tub is not None:
             try:
                 self.tub.delete_last_n_records(self.num_records_to_erase)
-                print("deleted last %d records." % self.num_records_to_erase)
+                print("last %d records are marked as deleted." % self.num_records_to_erase)
             except:
-                print("failed to erase")
+                print("failed to mark for deletion")
 
     def on_axis_dpad_left_right(self, val):
         if val == -1.0:
@@ -757,8 +756,6 @@ class JoystickController(object):
             self.on_dpad_right()
 
     def on_axis_dpad_up_down(self, val):
-        print("throttle_scale:", self.throttle_scale)
-
         if val == -1.0:
             self.on_dpad_up()
         elif val == 1.0:
