@@ -346,10 +346,8 @@ class PS4Joystick(Joystick):
         self.axis_names = {
             0x00: "left_stick_horz",
             0x01: "left_stick_vert",
-            0x02: "right_stick_horz",
-            0x05: "right_stick_vert",
-            0x03: "left_trigger_axis",
-            0x04: "right_trigger_axis",
+            0x03: "right_stick_horz",
+            0x04: "right_stick_vert",
             0x10: "dpad_leftright",
             0x11: "dpad_updown",
             0x19: "tilt_a",
@@ -361,17 +359,20 @@ class PS4Joystick(Joystick):
         }
 
         self.button_names = {
-            0x130: "square",
-            0x131: "cross",
+            0x02: "L2",
+            0x05: "R2",
+            0x130: "cross",
+            0x131: "circle",
             0x132: "circle",
             0x133: "triangle",
-            0x134: "L1",
+            0x134: "square",
             0x135: "R1",
-            0x136: "L2",
-            0x137: "R2",
-            0x13A: "L3",
-            0x13B: "R3",
-            0x13D: "pad",
+            0x136: "L1",
+            0x137: "R1",
+            0x13A: "share",
+            0x13B: "options",
+            0x13D: "left_stick_button",
+            0x13E: "right_stick_button",
             0x138: "share",
             0x139: "options",
             0x13C: "PS",
@@ -1020,11 +1021,13 @@ class PS3JoystickController(JoystickController):
         """
 
         self.button_down_trigger_map = {
-            "options": self.toggle_mode,
-            "circle": self.toggle_manual_recording,
-            "triangle": self.erase_last_n_records,
-            "cross": self.emergency_stop,
-            "share": self.toggle_constant_throttle,
+            'select': self.toggle_mode,
+            'circle': self.toggle_manual_recording,
+            'triangle': self.erase_last_n_records,
+            'cross': self.emergency_stop,
+            'dpad_up': self.increase_max_throttle,
+            'dpad_down': self.decrease_max_throttle,
+            'start': self.toggle_constant_throttle,
             "R1": self.chaos_monkey_on_right,
             "L1": self.chaos_monkey_on_left,
         }
@@ -1035,9 +1038,8 @@ class PS3JoystickController(JoystickController):
         }
 
         self.axis_trigger_map = {
-            "left_stick_horz": self.set_steering,
-            "right_stick_vert": self.set_throttle,
-            "dpad_up_down": self.on_axis_dpad_up_down,
+            'left_stick_horz': self.set_steering,
+            'right_stick_vert': self.set_throttle,
         }
 
 
@@ -1064,22 +1066,28 @@ class PS4JoystickController(JoystickController):
 
     def init_trigger_maps(self):
         """
-        init set of mapping from buttons to function calls for ps4
+        init set of mapping from buttons to function calls
         """
 
         self.button_down_trigger_map = {
-            "share": self.toggle_mode,
+            "options": self.toggle_mode,
             "circle": self.toggle_manual_recording,
             "triangle": self.erase_last_n_records,
             "cross": self.emergency_stop,
-            "L1": self.increase_max_throttle,
-            "R1": self.decrease_max_throttle,
-            "options": self.toggle_constant_throttle,
+            "share": self.toggle_constant_throttle,
+            "R1": self.chaos_monkey_on_right,
+            "L1": self.chaos_monkey_on_left,
         }
+
+        # self.button_up_trigger_map = {
+        #     "R1": self.chaos_monkey_off,
+        #     "L1": self.chaos_monkey_off,
+        # }
 
         self.axis_trigger_map = {
             "left_stick_horz": self.set_steering,
             "right_stick_vert": self.set_throttle,
+            "dpad_up_down": self.on_axis_dpad_up_down,
         }
 
 
