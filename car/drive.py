@@ -4,7 +4,7 @@ from car.camera import PiCamera
 from car.vehicle import Vehicle
 from car.controller import get_js_controller
 from car.tub import TubWriter, TubHandler
-w
+
 
 def drive(cfg):
     car = Vehicle()

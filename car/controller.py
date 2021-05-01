@@ -1491,7 +1491,7 @@ def get_js_controller(cfg):
 
 
 if __name__ == "__main__":
-    # Testing the PS3JoystickController
+    # Testing the PSJoystickController
     js = PS4Joystick("/dev/input/js0")
     js.init()
 
