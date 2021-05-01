@@ -4,6 +4,7 @@ from car.camera import PiCamera
 from car.vehicle import Vehicle
 from car.controller import get_js_controller
 from car.tub import TubWriter, TubHandler
+from car.controller import JoystickController
 
 
 def drive(cfg):
@@ -59,6 +60,10 @@ def drive(cfg):
     tub_writer = TubWriter(base_path=tub_path, inputs=inputs, types=types)
     car.add(tub_writer, inputs=inputs, outputs=["tub/num_records"],
             run_condition='recording')
+
+    if isinstance(ctrl, JoystickController):
+        print("You can now move your joystick to drive your car.")
+        ctrl.set_tub(tub_writer.tub)
 
     car.start(rate_hz=cfg.DRIVE_LOOP_HZ)
 
