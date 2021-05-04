@@ -1,2 +1,2 @@
 # pi_car
-This project is forked from https://github.com/autorope/donkeycar
+This project is a fork from https://github.com/autorope/donkeycar
