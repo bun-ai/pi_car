@@ -8,7 +8,7 @@ import time
 import Adafruit_PCA9685
 from Adafruit_GPIO import I2C
 
-from unused.utils import map_range
+from car.utils import map_range
 
 
 class PCA9685:
@@ -82,14 +82,13 @@ class PWMSteering:
     Wrapper over a PWM motor controller to convert angles to PWM pulses.
     """
 
-    LEFT_ANGLE = -1
-    RIGHT_ANGLE = 1
-
     def __init__(self,
                  controller=None,
                  left_pulse=240,
                  right_pulse=500):
 
+        self.LEFT_ANGLE = -1
+        self.RIGHT_ANGLE = 1
         self.controller = controller
         self.left_pulse = left_pulse
         self.right_pulse = right_pulse
@@ -126,11 +125,10 @@ class PWMThrottle:
     values to PWM pulses.
     """
 
-    MIN_THROTTLE = -1
-    MAX_THROTTLE = 1
+    def __init__(self, controller=None, max_pulse=420, min_pulse=330, zero_pulse=380):
 
-    def __init__(self, controller=None, max_pulse=330, min_pulse=420, zero_pulse=380):
-
+        self.MIN_THROTTLE = -1
+        self.MAX_THROTTLE = 1
         self.controller = controller
         self.max_pulse = max_pulse
         self.min_pulse = min_pulse

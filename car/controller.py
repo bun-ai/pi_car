@@ -314,11 +314,13 @@ class PS3Joystick(Joystick):
             0x04: "right_stick_vert",
             0x02: "L2_pressure",
             0x05: "R2_pressure",
+            0x11: "dpad_up_down",  # d 544
+            0x10: "dpad_left_right",  # f 546
         }
 
         self.button_names = {
-            0x13A: "select",  # 8 314
-            0x13B: "start",  # 9 315
+            0x13A: "share",  # 8 314
+            0x13B: "options",  # 9 315
             0x13C: "PS",  # a  316
             0x136: "L1",  # 4 310
             0x137: "R1",  # 5 311
@@ -330,10 +332,6 @@ class PS3Joystick(Joystick):
             0x131: "circle",  # 1 305
             0x130: "cross",  # 0 304
             0x134: "square",  # 3 308
-            0x220: "dpad_up",  # d 544
-            0x221: "dpad_down",  # e 545
-            0x222: "dpad_left",  # f 546
-            0x223: "dpad_right",  # 10 547
         }
 
 
@@ -348,12 +346,12 @@ class PS4Joystick(Joystick):
         self.axis_names = {
             0x00: "left_stick_horz",
             0x01: "left_stick_vert",
-            0x02: "right_stick_horz",
-            0x05: "right_stick_vert",
-            0x03: "left_trigger_axis",
-            0x04: "right_trigger_axis",
-            0x10: "dpad_leftright",
-            0x11: "dpad_updown",
+            0x02: "L2_pressure",
+            0x05: "R2_pressure",
+            0x03: "right_stick_horz",
+            0x04: "right_stick_vert",
+            0x10: "dpad_left_right",
+            0x11: "dpad_up_down",
             0x19: "tilt_a",
             0x1A: "tilt_b",
             0x1B: "tilt_c",
@@ -363,17 +361,16 @@ class PS4Joystick(Joystick):
         }
 
         self.button_names = {
-            0x130: "square",
-            0x131: "cross",
-            0x132: "circle",
+            0x130: "cross",
+            0x131: "circle",
             0x133: "triangle",
-            0x134: "L1",
-            0x135: "R1",
-            0x136: "L2",
-            0x137: "R2",
-            0x13A: "L3",
-            0x13B: "R3",
-            0x13D: "pad",
+            0x134: "square",
+            0x136: "L1",
+            0x137: "R1",
+            0x13A: "share",
+            0x13B: "options",
+            0x13D: "left_stick_button",
+            0x13E: "right_stick_button",
             0x138: "share",
             0x139: "options",
             0x13C: "PS",
@@ -652,7 +649,7 @@ class JoystickController(object):
         poll_delay=0.0,
         throttle_scale=1.0,
         steering_scale=1.0,
-        throttle_dir=-1.0,
+        throttle_dir=1.0,
         dev_fn="/dev/input/js0",
         auto_record_on_throttle=True,
     ):
@@ -675,7 +672,7 @@ class JoystickController(object):
         self.num_records_to_erase = 100
         self.estop_state = self.ES_IDLE
         self.chaos_monkey_steering = None
-        self.dead_zone = 0.0
+        self.dead_zone = 0.1
 
         self.button_down_trigger_map = {}
         self.button_up_trigger_map = {}
@@ -744,13 +741,37 @@ class JoystickController(object):
     def set_tub(self, tub):
         self.tub = tub
 
-    def erase_last_N_records(self):
+    def erase_last_n_records(self):
         if self.tub is not None:
             try:
                 self.tub.delete_last_n_records(self.num_records_to_erase)
-                print("deleted last %d records." % self.num_records_to_erase)
+                print("last %d records are marked as deleted." % self.num_records_to_erase)
             except:
-                print("failed to erase")
+                print("failed to mark for deletion")
+
+    def on_axis_dpad_left_right(self, val):
+        if val == -1.0:
+            self.on_dpad_left()
+        elif val == 1.0:
+            self.on_dpad_right()
+
+    def on_axis_dpad_up_down(self, val):
+        if val == -1.0:
+            self.on_dpad_up()
+        elif val == 1.0:
+            self.on_dpad_down()
+
+    def on_dpad_up(self):
+        self.increase_max_throttle()
+
+    def on_dpad_down(self):
+        self.decrease_max_throttle()
+
+    def on_dpad_left(self):
+        print("dpad left un-mapped")
+
+    def on_dpad_right(self):
+        print("dpad right un-mapped")
 
     def on_throttle_changes(self):
         """
@@ -810,13 +831,13 @@ class JoystickController(object):
 
     def set_steering(self, axis_val):
         self.angle = self.steering_scale * axis_val
-        # print("angle", self.angle)
+        print("angle", self.angle)
 
     def set_throttle(self, axis_val):
         # this value is often reversed, with positive value when pulling down
         self.last_throttle_axis_val = axis_val
         self.throttle = self.throttle_dir * axis_val * self.throttle_scale
-        # print("throttle", self.throttle)
+        print("throttle", self.throttle)
         self.on_throttle_changes()
 
     def toggle_manual_recording(self):
@@ -997,13 +1018,13 @@ class PS3JoystickController(JoystickController):
         """
 
         self.button_down_trigger_map = {
-            "select": self.toggle_mode,
-            "circle": self.toggle_manual_recording,
-            "triangle": self.erase_last_N_records,
-            "cross": self.emergency_stop,
-            "dpad_up": self.increase_max_throttle,
-            "dpad_down": self.decrease_max_throttle,
-            "start": self.toggle_constant_throttle,
+            'select': self.toggle_mode,
+            'circle': self.toggle_manual_recording,
+            'triangle': self.erase_last_n_records,
+            'cross': self.emergency_stop,
+            'dpad_up': self.increase_max_throttle,
+            'dpad_down': self.decrease_max_throttle,
+            'start': self.toggle_constant_throttle,
             "R1": self.chaos_monkey_on_right,
             "L1": self.chaos_monkey_on_left,
         }
@@ -1014,8 +1035,8 @@ class PS3JoystickController(JoystickController):
         }
 
         self.axis_trigger_map = {
-            "left_stick_horz": self.set_steering,
-            "right_stick_vert": self.set_throttle,
+            'left_stick_horz': self.set_steering,
+            'right_stick_vert': self.set_throttle,
         }
 
 
@@ -1042,22 +1063,28 @@ class PS4JoystickController(JoystickController):
 
     def init_trigger_maps(self):
         """
-        init set of mapping from buttons to function calls for ps4
+        init set of mapping from buttons to function calls
         """
 
         self.button_down_trigger_map = {
-            "share": self.toggle_mode,
+            "PS": self.toggle_mode,
             "circle": self.toggle_manual_recording,
-            "triangle": self.erase_last_N_records,
+            "triangle": self.erase_last_n_records,
+            "square": self.toggle_constant_throttle,
             "cross": self.emergency_stop,
-            "L1": self.increase_max_throttle,
-            "R1": self.decrease_max_throttle,
-            "options": self.toggle_constant_throttle,
+            "R1": self.chaos_monkey_on_right,
+            "L1": self.chaos_monkey_on_left,
+        }
+
+        self.button_up_trigger_map = {
+            "R1": self.chaos_monkey_off,
+            "L1": self.chaos_monkey_off,
         }
 
         self.axis_trigger_map = {
             "left_stick_horz": self.set_steering,
             "right_stick_vert": self.set_throttle,
+            "dpad_up_down": self.on_axis_dpad_up_down,
         }
 
 
@@ -1128,7 +1155,7 @@ class XboxOneJoystickController(JoystickController):
         self.button_down_trigger_map = {
             "a_button": self.toggle_mode,
             "b_button": self.toggle_manual_recording,
-            "x_button": self.erase_last_N_records,
+            "x_button": self.erase_last_n_records,
             "y_button": self.emergency_stop,
             "right_shoulder": self.increase_max_throttle,
             "left_shoulder": self.decrease_max_throttle,
@@ -1197,7 +1224,7 @@ class LogitechJoystickController(JoystickController):
         self.button_down_trigger_map = {
             "start": self.toggle_mode,
             "B": self.toggle_manual_recording,
-            "Y": self.erase_last_N_records,
+            "Y": self.erase_last_n_records,
             "A": self.emergency_stop,
             "back": self.toggle_constant_throttle,
             "R1": self.chaos_monkey_on_right,
@@ -1212,17 +1239,17 @@ class LogitechJoystickController(JoystickController):
         self.axis_trigger_map = {
             "left_stick_horz": self.set_steering,
             "right_stick_vert": self.set_throttle,
-            "dpad_leftright": self.on_axis_dpad_LR,
-            "dpad_up_down": self.on_axis_dpad_UD,
+            "dpad_leftright": self.on_axis_dpad_left_right,
+            "dpad_up_down": self.on_axis_dpad_up_down,
         }
 
-    def on_axis_dpad_LR(self, val):
+    def on_axis_dpad_left_right(self, val):
         if val == -1.0:
             self.on_dpad_left()
         elif val == 1.0:
             self.on_dpad_right()
 
-    def on_axis_dpad_UD(self, val):
+    def on_axis_dpad_up_down(self, val):
         if val == -1.0:
             self.on_dpad_up()
         elif val == 1.0:
@@ -1260,7 +1287,7 @@ class NimbusController(JoystickController):
         # init set of mapping from buttons to function calls
 
         self.button_down_trigger_map = {
-            "y": self.erase_last_N_records,
+            "y": self.erase_last_n_records,
             "b": self.toggle_mode,
             "a": self.emergency_stop,
         }
@@ -1290,7 +1317,7 @@ class WiiUController(JoystickController):
         # init set of mapping from buttons to function calls
 
         self.button_down_trigger_map = {
-            "Y": self.erase_last_N_records,
+            "Y": self.erase_last_n_records,
             "B": self.toggle_mode,
             "A": self.emergency_stop,
         }
@@ -1328,7 +1355,7 @@ class RC3ChanJoystickController(JoystickController):
 
     def on_switch_up(self):
         if self.mode == "user":
-            self.erase_last_N_records()
+            self.erase_last_n_records()
         else:
             self.emergency_stop()
 
@@ -1448,7 +1475,7 @@ def get_js_controller(cfg):
     else:
         raise (Exception("Unknown controller type: " + cfg.CONTROLLER_TYPE))
 
-    ctr = cont_class(
+    ctrl = cont_class(
         throttle_dir=cfg.JOYSTICK_THROTTLE_DIR,
         throttle_scale=cfg.JOYSTICK_MAX_THROTTLE,
         steering_scale=cfg.JOYSTICK_STEERING_SCALE,
@@ -1456,12 +1483,12 @@ def get_js_controller(cfg):
         dev_fn=cfg.JOYSTICK_DEVICE_FILE,
     )
 
-    ctr.set_deadzone(cfg.JOYSTICK_DEADZONE)
-    return ctr
+    ctrl.set_deadzone(cfg.JOYSTICK_DEADZONE)
+    return ctrl
 
 
 if __name__ == "__main__":
-    # Testing the XboxOneJoystickController
+    # Testing the PSJoystickController
     js = PS4Joystick("/dev/input/js0")
     js.init()
 
