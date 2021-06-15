@@ -5,6 +5,9 @@ from typing import List, Any, Tuple
 from PIL import Image
 
 
+"""
+IMAGES
+"""
 ONE_BYTE_SCALE = 1.0 / 255.0
 
 
@@ -118,6 +121,45 @@ def denormalize_image(img_arr_float):
     return (img_arr_float * 255.0).astype(np.uint8)
 
 
+"""
+BINNING
+functions to help convert between floating point numbers and categories.
+"""
+
+
+def clamp(n, min, max):
+    if n < min:
+        return min
+    if n > max:
+        return max
+    return n
+
+
+def linear_bin(a, bins=15, offset=1, range_r=2.0):
+    """
+    create a bin of length 'bins'
+    map val A to range R
+    offset one hot bin by offset, commonly R/2
+    """
+    a = a + offset
+    b = round(a / (range_r / (bins - offset)))
+    arr = np.zeros(bins)
+    b = clamp(b, 0, bins - 1)
+    arr[int(b)] = 1
+    return arr
+
+
+def linear_unbin(arr, bins=15, offset=-1, range_r=2.0):
+    """
+    preform inverse linear_bin, taking
+    one hot encoded arr, and get max value
+    rescale given R range and offset
+    """
+    b = np.argmax(arr)
+    a = b * (range_r / (bins + offset)) + offset
+    return a
+
+
 def train_test_split(data_list: List[Any],
                      shuffle: bool = True,
                      test_size: float = 0.2) -> Tuple[List[Any], List[Any]]:
@@ -145,3 +187,41 @@ def train_test_split(data_list: List[Any],
         val_data = data_list[target_train_size:]
 
     return train_data, val_data
+
+
+def get_model_by_type(model_type: str, cfg: 'Config') -> 'KerasPilot':
+    """
+    given the string model_type and the configuration settings in cfg
+    create a Keras model and return it.
+    """
+    from car.keras import KerasPilot, KerasCategorical, KerasLinear, KerasInferred
+    from donkeycar.parts.tflite import TFLitePilot
+
+    if model_type is None:
+        model_type = cfg.DEFAULT_MODEL_TYPE
+    print("\"get_model_by_type\" model Type is: {}".format(model_type))
+
+    input_shape = (cfg.IMAGE_H, cfg.IMAGE_W, cfg.IMAGE_DEPTH)
+    kl: KerasPilot
+    if model_type == "linear":
+        kl = KerasLinear(input_shape=input_shape)
+    elif model_type == "categorical":
+        kl = KerasCategorical(input_shape=input_shape,
+                              throttle_range=cfg.MODEL_CATEGORICAL_MAX_THROTTLE_RANGE)
+    elif model_type == 'inferred':
+        kl = KerasInferred(input_shape=input_shape)
+    elif model_type == "tflite_linear":
+        kl = TFLitePilot()
+    elif model_type == "tensorrt_linear":
+        # Aggressively lazy load this. This module imports pycuda.autoinit
+        # which causes a lot of unexpected things to happen when using TF-GPU
+        # for training.
+        from donkeycar.parts.tensorrt import TensorRTLinear
+        kl = TensorRTLinear(cfg=cfg)
+    else:
+        raise Exception("Unknown model type {:}, supported types are "
+                        "linear, categorical, inferred, tflite_linear, "
+                        "tensorrt_linear"
+                        .format(model_type))
+
+    return kl
