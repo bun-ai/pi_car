@@ -2,15 +2,15 @@ import math
 import os
 from typing import List, Dict, Union
 
-from car.config import Config
-from donkeycar.parts.keras import KerasPilot
-from donkeycar.parts.tflite import keras_model_to_tflite
-from pipeline.sequence import TubRecord, TubSequence, TfmIterator
-from car.types import TubDataset
-from pipeline.augmentations import ImageAugmentation
-from car.utils import get_model_by_type, normalize_image
 import tensorflow as tf
 import numpy as np
+from car.config import Config
+from car.keras import KerasPilot
+from car.tflite import keras_model_to_tflite
+from car.types import TubDataset
+from car.utils import get_model_by_type, normalize_image
+from pipeline.sequence import TubRecord, TubSequence, TfmIterator
+from pipeline.augmentations import ImageAugmentation
 
 
 class BatchSequence(object):
