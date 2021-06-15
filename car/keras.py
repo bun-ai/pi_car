@@ -43,13 +43,13 @@ class KerasPilot(ABC):
     def __init__(self) -> None:
         self.model: Optional[Model] = None
         self.optimizer = "adam"
-        print(f'Created {self}')
+        print(f"Created {self}")
 
     def load(self, model_path: str) -> None:
         self.model = keras.models.load_model(model_path, compile=False)
 
     def load_weights(self, model_path: str, by_name: bool = True) -> None:
-        assert self.model, 'Model not set'
+        assert self.model, "Model not set"
         self.model.load_weights(model_path, by_name=by_name)
 
     def shutdown(self) -> None:
@@ -58,9 +58,8 @@ class KerasPilot(ABC):
     def compile(self) -> None:
         pass
 
-    def set_optimizer(self, optimizer_type: str,
-                      rate: float, decay: float) -> None:
-        assert self.model, 'Model not set'
+    def set_optimizer(self, optimizer_type: str, rate: float, decay: float) -> None:
+        assert self.model, "Model not set"
         if optimizer_type == "adam":
             self.model.optimizer = keras.optimizers.Adam(lr=rate, decay=decay)
         elif optimizer_type == "sgd":
@@ -71,11 +70,12 @@ class KerasPilot(ABC):
             raise Exception("unknown optimizer type: %s" % optimizer_type)
 
     def get_input_shape(self) -> tf.TensorShape:
-        assert self.model, 'Model not set'
+        assert self.model, "Model not set"
         return self.model.inputs[0].shape
 
-    def run(self, img_arr: np.ndarray, other_arr: np.ndarray = None) \
-            -> Tuple[Union[float, np.ndarray], ...]:
+    def run(
+        self, img_arr: np.ndarray, other_arr: np.ndarray = None
+    ) -> Tuple[Union[float, np.ndarray], ...]:
         """
         Donkeycar parts interface to run the part in the loop.
 
@@ -89,8 +89,9 @@ class KerasPilot(ABC):
         return self.inference(norm_arr, other_arr)
 
     @abstractmethod
-    def inference(self, img_arr: np.ndarray, other_arr: np.ndarray) \
-            -> Tuple[Union[float, np.ndarray], ...]:
+    def inference(
+        self, img_arr: np.ndarray, other_arr: np.ndarray
+    ) -> Tuple[Union[float, np.ndarray], ...]:
         """
         Virtual method to be implemented by child classes for inferencing
 
@@ -102,17 +103,19 @@ class KerasPilot(ABC):
         """
         pass
 
-    def train(self,
-              model_path: str,
-              train_data: 'BatchSequence',
-              train_steps: int,
-              batch_size: int,
-              validation_data: 'BatchSequence',
-              validation_steps: int,
-              epochs: int,
-              verbose: int = 1,
-              min_delta: float = .0005,
-              patience: int = 5) -> tf.keras.callbacks.History:
+    def train(
+        self,
+        model_path: str,
+        train_data: "BatchSequence",
+        train_steps: int,
+        batch_size: int,
+        validation_data: "BatchSequence",
+        validation_steps: int,
+        epochs: int,
+        verbose: int = 1,
+        min_delta: float = 0.0005,
+        patience: int = 5,
+    ) -> tf.keras.callbacks.History:
         """
         trains the model
         """
@@ -120,13 +123,14 @@ class KerasPilot(ABC):
         self.compile()
 
         callbacks = [
-            EarlyStopping(monitor='val_loss',
-                          patience=patience,
-                          min_delta=min_delta),
-            ModelCheckpoint(monitor='val_loss',
-                            filepath=model_path,
-                            save_best_only=True,
-                            verbose=verbose)]
+            EarlyStopping(monitor="val_loss", patience=patience, min_delta=min_delta),
+            ModelCheckpoint(
+                monitor="val_loss",
+                filepath=model_path,
+                save_best_only=True,
+                verbose=verbose,
+            ),
+        ]
 
         history: Dict[str, Any] = model.fit(
             x=train_data,
@@ -138,7 +142,7 @@ class KerasPilot(ABC):
             epochs=epochs,
             verbose=verbose,
             workers=1,
-            use_multiprocessing=False
+            use_multiprocessing=False,
         )
         return history
 
@@ -151,19 +155,16 @@ class KerasPilot(ABC):
         return img_arr
 
     def y_transform(self, record: TubRecord) -> XY:
-        raise NotImplementedError(f'{self} not ready yet for new training '
-                                  f'pipeline')
+        raise NotImplementedError(f"{self} not ready yet for new training " f"pipeline")
 
     def x_translate(self, x: XY) -> Dict[str, Union[float, np.ndarray]]:
-        return {'img_in': x}
+        return {"img_in": x}
 
     def y_translate(self, y: XY) -> Dict[str, Union[float, np.ndarray]]:
-        raise NotImplementedError(f'{self} not ready yet for new training '
-                                  f'pipeline')
+        raise NotImplementedError(f"{self} not ready yet for new training " f"pipeline")
 
     def output_types(self) -> Dict[str, np.typename]:
-        raise NotImplementedError(f'{self} not ready yet for new training '
-                                  f'pipeline')
+        raise NotImplementedError(f"{self} not ready yet for new training " f"pipeline")
 
     def output_types(self):
         """ Used in tf.data, assume all types are doubles"""
@@ -200,27 +201,28 @@ class KerasCategorical(KerasPilot):
         self.throttle_range = throttle_range
 
     def compile(self):
-        self.model.compile(optimizer=self.optimizer, metrics=['accuracy'],
+        self.model.compile(optimizer=self.optimizer,
+                           metrics=['accuracy'],
                            loss={'angle_out': 'categorical_crossentropy',
                                  'throttle_out': 'categorical_crossentropy'},
-                           loss_weights={'angle_out': 0.5, 'throttle_out': 0.5})
+                           loss_weights={'angle_out': 0.5,
+                                         'throttle_out': 0.5})
 
     def inference(self, img_arr, other_arr):
         if img_arr is None:
-            print('no image')
+            print("no image")
             return 0.0, 0.0
 
         img_arr = img_arr.reshape((1,) + img_arr.shape)
         angle_binned, throttle_binned = self.model.predict(img_arr)
         bins = len(throttle_binned[0])
-        throttle = utils.linear_unbin(throttle_binned, bins=bins,
-                                         offset=0.0, range_r=self.throttle_range)
+        throttle = utils.linear_unbin(throttle_binned, bins=bins, offset=0.0, range_r=self.throttle_range)
         angle = utils.linear_unbin(angle_binned)
         return angle, throttle
 
     def y_transform(self, record: TubRecord):
-        angle: float = record.underlying['user/angle']
-        throttle: float = record.underlying['user/throttle']
+        angle: float = record.underlying["user/angle"]
+        throttle: float = record.underlying["user/throttle"]
         angle = linear_bin(angle, bins=15, offset=1, range_r=2.0)
         throttle = linear_bin(throttle, bins=20, offset=0.0, range_r=self.throttle_range)
         return angle, throttle
@@ -228,16 +230,17 @@ class KerasCategorical(KerasPilot):
     def y_translate(self, y: XY) -> Dict[str, Union[float, np.ndarray]]:
         if isinstance(y, tuple):
             angle, throttle = y
-            return {'angle_out': angle, 'throttle_out': throttle}
+            return {"angle_out": angle, "throttle_out": throttle}
         else:
-            raise TypeError('Expected tuple')
+            raise TypeError("Expected tuple")
 
     def output_shapes(self):
         # need to cut off None from [None, 120, 160, 3] tensor shape
         img_shape = self.get_input_shape()[1:]
-        shapes = ({'img_in': tf.TensorShape(img_shape)},
-                  {'angle_out': tf.TensorShape([15]),
-                   'throttle_out': tf.TensorShape([20])})
+        shapes = (
+            {"img_in": tf.TensorShape(img_shape)},
+            {"angle_out": tf.TensorShape([15]), "throttle_out": tf.TensorShape([20])},
+        )
         return shapes
 
 
@@ -253,7 +256,7 @@ class KerasLinear(KerasPilot):
         self.model = default_n_linear(num_outputs, input_shape)
 
     def compile(self):
-        self.model.compile(optimizer=self.optimizer, loss='mse')
+        self.model.compile(optimizer=self.optimizer, loss="mse")
 
     def inference(self, img_arr, other_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
@@ -263,23 +266,24 @@ class KerasLinear(KerasPilot):
         return steering[0][0], throttle[0][0]
 
     def y_transform(self, record: TubRecord):
-        angle: float = record.underlying['user/angle']
-        throttle: float = record.underlying['user/throttle']
+        angle: float = record.underlying["user/angle"]
+        throttle: float = record.underlying["user/throttle"]
         return angle, throttle
 
     def y_translate(self, y: XY) -> Dict[str, Union[float, np.ndarray]]:
         if isinstance(y, tuple):
             angle, throttle = y
-            return {'n_outputs0': angle, 'n_outputs1': throttle}
+            return {"n_outputs0": angle, "n_outputs1": throttle}
         else:
-            raise TypeError('Expected tuple')
+            raise TypeError("Expected tuple")
 
     def output_shapes(self):
         # need to cut off None from [None, 120, 160, 3] tensor shape
         img_shape = self.get_input_shape()[1:]
-        shapes = ({'img_in': tf.TensorShape(img_shape)},
-                  {'n_outputs0': tf.TensorShape([]),
-                   'n_outputs1': tf.TensorShape([])})
+        shapes = (
+            {"img_in": tf.TensorShape(img_shape)},
+            {"n_outputs0": tf.TensorShape([]), "n_outputs1": tf.TensorShape([])},
+        )
         return shapes
 
 
@@ -289,7 +293,7 @@ class KerasInferred(KerasPilot):
         self.model = default_n_linear(num_outputs, input_shape)
 
     def compile(self):
-        self.model.compile(optimizer=self.optimizer, loss='mse')
+        self.model.compile(optimizer=self.optimizer, loss="mse")
 
     def inference(self, img_arr, other_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
@@ -298,17 +302,19 @@ class KerasInferred(KerasPilot):
         return steering[0], utils.throttle(steering[0])
 
     def y_transform(self, record: TubRecord):
-        angle: float = record.underlying['user/angle']
+        angle: float = record.underlying["user/angle"]
         return angle
 
     def y_translate(self, y: XY) -> Dict[str, Union[float, np.ndarray]]:
-        return {'n_outputs0': y}
+        return {"n_outputs0": y}
 
     def output_shapes(self):
         # need to cut off None from [None, 120, 160, 3] tensor shape
         img_shape = self.get_input_shape()[1:]
-        shapes = ({'img_in': tf.TensorShape(img_shape)},
-                  {'n_outputs0': tf.TensorShape([])})
+        shapes = (
+            {"img_in": tf.TensorShape(img_shape)},
+            {"n_outputs0": tf.TensorShape([])},
+        )
         return shapes
 
 
@@ -348,7 +354,7 @@ class KerasIMU(KerasPilot):
                                  input_shape=input_shape)
 
     def compile(self):
-        self.model.compile(optimizer=self.optimizer, loss='mse')
+        self.model.compile(optimizer=self.optimizer, loss="mse")
 
     def inference(self, img_arr, other_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
@@ -359,9 +365,9 @@ class KerasIMU(KerasPilot):
         return steering[0][0], throttle[0][0]
 
     def y_transform(self, record: TubRecord):
-        angle: float = record.underlying['user/angle']
-        throttle: float = record.underlying['user/throttle']
-        return {'n_out0': angle, 'n_out1': throttle}
+        angle: float = record.underlying["user/angle"]
+        throttle: float = record.underlying["user/throttle"]
+        return {"n_out0": angle, "n_out1": throttle}
 
 
 class KerasBehavioral(KerasPilot):
@@ -376,7 +382,7 @@ class KerasBehavioral(KerasPilot):
                                  input_shape=input_shape)
 
     def compile(self):
-        self.model.compile(optimizer=self.optimizer, loss='mse')
+        self.model.compile(optimizer=self.optimizer, loss="mse")
 
     def inference(self, img_arr, state_array):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
@@ -394,11 +400,11 @@ class KerasBehavioral(KerasPilot):
         return angle_unbinned, throttle
 
     def y_transform(self, record: TubRecord):
-        angle: float = record.underlying['user/angle']
-        throttle: float = record.underlying['user/throttle']
+        angle: float = record.underlying["user/angle"]
+        throttle: float = record.underlying["user/throttle"]
         angle = linear_bin(angle, bins=15, offset=1, range_r=2.0)
         throttle = linear_bin(throttle, bins=20, offset=0.0, range_r=0.5)
-        return {'angle_out': angle, 'throttle_out': throttle}
+        return {"angle_out": angle, "throttle_out": throttle}
 
 
 class KerasLocalizer(KerasPilot):
@@ -409,12 +415,10 @@ class KerasLocalizer(KerasPilot):
 
     def __init__(self, num_locations=8, input_shape=(120, 160, 3)):
         super().__init__()
-        self.model = default_loc(num_locations=num_locations,
-                                 input_shape=input_shape)
+        self.model = default_loc(num_locations=num_locations, input_shape=input_shape)
 
     def compile(self):
-        self.model.compile(optimizer=self.optimizer, metrics=['acc'],
-                           loss='mse')
+        self.model.compile(optimizer=self.optimizer, metrics=["acc"], loss="mse")
 
     def inference(self, img_arr, other_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
@@ -423,7 +427,7 @@ class KerasLocalizer(KerasPilot):
         return angle, throttle, loc
 
 
-def conv2d(filters, kernel, strides, layer_num, activation='relu'):
+def conv2d(filters, kernel, strides, layer_num, activation="relu"):
     """
     Helper function to create a standard valid-padded convolutional layer
     with square kernel and strides and unified naming convention
@@ -463,23 +467,22 @@ def core_cnn_layers(img_in, drop, l4_stride=1):
     x = Dropout(drop)(x)
     x = conv2d(64, 3, 1, 5)(x)
     x = Dropout(drop)(x)
-    x = Flatten(name='flattened')(x)
+    x = Flatten(name="flattened")(x)
     return x
 
 
 def default_n_linear(num_outputs, input_shape=(120, 160, 3)):
     drop = 0.2
-    img_in = Input(shape=input_shape, name='img_in')
+    img_in = Input(shape=input_shape, name="img_in")
     x = core_cnn_layers(img_in, drop)
-    x = Dense(100, activation='relu', name='dense_1')(x)
+    x = Dense(100, activation="relu", name="dense_1")(x)
     x = Dropout(drop)(x)
-    x = Dense(50, activation='relu', name='dense_2')(x)
+    x = Dense(50, activation="relu", name="dense_2")(x)
     x = Dropout(drop)(x)
 
     outputs = []
     for i in range(num_outputs):
-        outputs.append(
-            Dense(1, activation='linear', name='n_outputs' + str(i))(x))
+        outputs.append(Dense(1, activation="linear", name="n_outputs" + str(i))(x))
 
     model = Model(inputs=[img_in], outputs=outputs)
     return model
@@ -487,16 +490,16 @@ def default_n_linear(num_outputs, input_shape=(120, 160, 3)):
 
 def default_categorical(input_shape=(120, 160, 3)):
     drop = 0.2
-    img_in = Input(shape=input_shape, name='img_in')
+    img_in = Input(shape=input_shape, name="img_in")
     x = core_cnn_layers(img_in, drop, l4_stride=2)
-    x = Dense(100, activation='relu', name="dense_1")(x)
+    x = Dense(100, activation="relu", name="dense_1")(x)
     x = Dropout(drop)(x)
-    x = Dense(50, activation='relu', name="dense_2")(x)
+    x = Dense(50, activation="relu", name="dense_2")(x)
     x = Dropout(drop)(x)
     # Categorical output of the angle into 15 bins
-    angle_out = Dense(15, activation='softmax', name='angle_out')(x)
+    angle_out = Dense(15, activation="softmax", name="angle_out")(x)
     # categorical output of throttle into 20 bins
-    throttle_out = Dense(20, activation='softmax', name='throttle_out')(x)
+    throttle_out = Dense(20, activation="softmax", name="throttle_out")(x)
 
     model = Model(inputs=[img_in], outputs=[angle_out, throttle_out])
     return model
@@ -504,27 +507,27 @@ def default_categorical(input_shape=(120, 160, 3)):
 
 def default_imu(num_outputs, num_imu_inputs, input_shape):
     drop = 0.2
-    img_in = Input(shape=input_shape, name='img_in')
+    img_in = Input(shape=input_shape, name="img_in")
     imu_in = Input(shape=(num_imu_inputs,), name="imu_in")
 
     x = core_cnn_layers(img_in, drop)
-    x = Dense(100, activation='relu')(x)
-    x = Dropout(.1)(x)
+    x = Dense(100, activation="relu")(x)
+    x = Dropout(0.1)(x)
 
     y = imu_in
-    y = Dense(14, activation='relu')(y)
-    y = Dense(14, activation='relu')(y)
-    y = Dense(14, activation='relu')(y)
+    y = Dense(14, activation="relu")(y)
+    y = Dense(14, activation="relu")(y)
+    y = Dense(14, activation="relu")(y)
 
     z = concatenate([x, y])
-    z = Dense(50, activation='relu')(z)
-    z = Dropout(.1)(z)
-    z = Dense(50, activation='relu')(z)
-    z = Dropout(.1)(z)
+    z = Dense(50, activation="relu")(z)
+    z = Dropout(0.1)(z)
+    z = Dense(50, activation="relu")(z)
+    z = Dropout(0.1)(z)
 
     outputs = []
     for i in range(num_outputs):
-        outputs.append(Dense(1, activation='linear', name='out_' + str(i))(z))
+        outputs.append(Dense(1, activation="linear", name="out_" + str(i))(z))
 
     model = Model(inputs=[img_in, imu_in], outputs=outputs)
     return model
@@ -532,28 +535,28 @@ def default_imu(num_outputs, num_imu_inputs, input_shape):
 
 def default_bhv(num_bvh_inputs, input_shape):
     drop = 0.2
-    img_in = Input(shape=input_shape, name='img_in')
+    img_in = Input(shape=input_shape, name="img_in")
     bvh_in = Input(shape=(num_bvh_inputs,), name="behavior_in")
 
     x = core_cnn_layers(img_in, drop)
-    x = Dense(100, activation='relu')(x)
-    x = Dropout(.1)(x)
+    x = Dense(100, activation="relu")(x)
+    x = Dropout(0.1)(x)
 
     y = bvh_in
-    y = Dense(num_bvh_inputs * 2, activation='relu')(y)
-    y = Dense(num_bvh_inputs * 2, activation='relu')(y)
-    y = Dense(num_bvh_inputs * 2, activation='relu')(y)
+    y = Dense(num_bvh_inputs * 2, activation="relu")(y)
+    y = Dense(num_bvh_inputs * 2, activation="relu")(y)
+    y = Dense(num_bvh_inputs * 2, activation="relu")(y)
 
     z = concatenate([x, y])
-    z = Dense(100, activation='relu')(z)
-    z = Dropout(.1)(z)
-    z = Dense(50, activation='relu')(z)
-    z = Dropout(.1)(z)
+    z = Dense(100, activation="relu")(z)
+    z = Dropout(0.1)(z)
+    z = Dense(50, activation="relu")(z)
+    z = Dropout(0.1)(z)
 
     # Categorical output of the angle into 15 bins
-    angle_out = Dense(15, activation='softmax', name='angle_out')(z)
+    angle_out = Dense(15, activation="softmax", name="angle_out")(z)
     # Categorical output of throttle into 20 bins
-    throttle_out = Dense(20, activation='softmax', name='throttle_out')(z)
+    throttle_out = Dense(20, activation="softmax", name="throttle_out")(z)
 
     model = Model(inputs=[img_in, bvh_in], outputs=[angle_out, throttle_out])
     return model
@@ -561,21 +564,21 @@ def default_bhv(num_bvh_inputs, input_shape):
 
 def default_loc(num_locations, input_shape):
     drop = 0.2
-    img_in = Input(shape=input_shape, name='img_in')
+    img_in = Input(shape=input_shape, name="img_in")
 
     x = core_cnn_layers(img_in, drop)
-    x = Dense(100, activation='relu')(x)
+    x = Dense(100, activation="relu")(x)
     x = Dropout(drop)(x)
 
-    z = Dense(50, activation='relu')(x)
+    z = Dense(50, activation="relu")(x)
     z = Dropout(drop)(z)
 
     # linear output of the angle
-    angle_out = Dense(1, activation='linear', name='angle')(z)
+    angle_out = Dense(1, activation="linear", name="angle")(z)
     # linear output of throttle
-    throttle_out = Dense(1, activation='linear', name='throttle')(z)
+    throttle_out = Dense(1, activation="linear", name="throttle")(z)
     # categorical output of location
-    loc_out = Dense(num_locations, activation='softmax', name='loc')(z)
+    loc_out = Dense(num_locations, activation="softmax", name="loc")(z)
 
     model = Model(inputs=[img_in], outputs=[angle_out, throttle_out, loc_out])
     return model
@@ -593,7 +596,7 @@ class KerasRNN_LSTM(KerasPilot):
         self.optimizer = "rmsprop"
 
     def compile(self):
-        self.model.compile(optimizer=self.optimizer, loss='mse')
+        self.model.compile(optimizer=self.optimizer, loss="mse")
 
     def inference(self, img_arr, other_arr):
         if img_arr.shape[2] == 3 and self.input_shape[2] == 1:
@@ -605,8 +608,9 @@ class KerasRNN_LSTM(KerasPilot):
         self.img_seq = self.img_seq[1:]
         self.img_seq.append(img_arr)
 
-        img_arr = np.array(self.img_seq).reshape((1, self.seq_length,
-                                                  *self.input_shape))
+        img_arr = np.array(self.img_seq).reshape(
+            (1, self.seq_length, *self.input_shape)
+        )
         outputs = self.model.predict([img_arr])
         steering = outputs[0][0]
         throttle = outputs[0][1]
@@ -617,33 +621,37 @@ def rnn_lstm(seq_length=3, num_outputs=2, input_shape=(120, 160, 3)):
     # add sequence length dimensions as keras time-distributed expects shape
     # of (num_samples, seq_length, input_shape)
     img_seq_shape = (seq_length,) + input_shape
-    img_in = Input(batch_shape=img_seq_shape, name='img_in')
+    img_in = Input(batch_shape=img_seq_shape, name="img_in")
     drop_out = 0.3
 
     x = Sequential()
-    x.add(TD(Convolution2D(24, (5, 5), strides=(2, 2), activation='relu'),
-             input_shape=img_seq_shape))
+    x.add(
+        TD(
+            Convolution2D(24, (5, 5), strides=(2, 2), activation="relu"),
+            input_shape=img_seq_shape,
+        )
+    )
     x.add(TD(Dropout(drop_out)))
-    x.add(TD(Convolution2D(32, (5, 5), strides=(2, 2), activation='relu')))
+    x.add(TD(Convolution2D(32, (5, 5), strides=(2, 2), activation="relu")))
     x.add(TD(Dropout(drop_out)))
-    x.add(TD(Convolution2D(32, (3, 3), strides=(2, 2), activation='relu')))
+    x.add(TD(Convolution2D(32, (3, 3), strides=(2, 2), activation="relu")))
     x.add(TD(Dropout(drop_out)))
-    x.add(TD(Convolution2D(32, (3, 3), strides=(1, 1), activation='relu')))
+    x.add(TD(Convolution2D(32, (3, 3), strides=(1, 1), activation="relu")))
     x.add(TD(Dropout(drop_out)))
     x.add(TD(MaxPooling2D(pool_size=(2, 2))))
-    x.add(TD(Flatten(name='flattened')))
-    x.add(TD(Dense(100, activation='relu')))
+    x.add(TD(Flatten(name="flattened")))
+    x.add(TD(Dense(100, activation="relu")))
     x.add(TD(Dropout(drop_out)))
 
     x.add(LSTM(128, return_sequences=True, name="LSTM_seq"))
-    x.add(Dropout(.1))
+    x.add(Dropout(0.1))
     x.add(LSTM(128, return_sequences=False, name="LSTM_fin"))
-    x.add(Dropout(.1))
-    x.add(Dense(128, activation='relu'))
-    x.add(Dropout(.1))
-    x.add(Dense(64, activation='relu'))
-    x.add(Dense(10, activation='relu'))
-    x.add(Dense(num_outputs, activation='linear', name='model_outputs'))
+    x.add(Dropout(0.1))
+    x.add(Dense(128, activation="relu"))
+    x.add(Dropout(0.1))
+    x.add(Dense(64, activation="relu"))
+    x.add(Dense(10, activation="relu"))
+    x.add(Dense(num_outputs, activation="linear", name="model_outputs"))
     return x
 
 
@@ -651,8 +659,7 @@ class Keras3D_CNN(KerasPilot):
     def __init__(self, input_shape=(120, 160, 3), seq_length=20, num_outputs=2):
         super().__init__()
         self.input_shape = input_shape
-        self.model = build_3d_cnn(input_shape, s=seq_length,
-                                  num_outputs=num_outputs)
+        self.model = build_3d_cnn(input_shape, s=seq_length, num_outputs=num_outputs)
         self.seq_length = seq_length
         self.img_seq = []
 
@@ -757,8 +764,7 @@ class KerasLatent(KerasPilot):
     def compile(self):
         loss = {"img_out": "mse", "n_outputs0": "mse", "n_outputs1": "mse"}
         weights = {"img_out": 100.0, "n_outputs0": 2.0, "n_outputs1": 1.0}
-        self.model.compile(optimizer=self.optimizer,
-                           loss=loss, loss_weights=weights)
+        self.model.compile(optimizer=self.optimizer, loss=loss, loss_weights=weights)
 
     def inference(self, img_arr, other_arr):
         img_arr = img_arr.reshape((1,) + img_arr.shape)
@@ -773,23 +779,23 @@ def default_latent(num_outputs, input_shape):
     #  have corresponding decoder. Also outputs should be reversed with
     #  images at end.
     drop = 0.2
-    img_in = Input(shape=input_shape, name='img_in')
+    img_in = Input(shape=input_shape, name="img_in")
     x = img_in
-    x = Convolution2D(24, (5, 5), strides=(2, 2), activation='relu', name="conv2d_1")(x)
+    x = Convolution2D(24, (5, 5), strides=(2, 2), activation="relu", name="conv2d_1")(x)
     x = Dropout(drop)(x)
-    x = Convolution2D(32, (5, 5), strides=(2, 2), activation='relu', name="conv2d_2")(x)
+    x = Convolution2D(32, (5, 5), strides=(2, 2), activation="relu", name="conv2d_2")(x)
     x = Dropout(drop)(x)
-    x = Convolution2D(32, (5, 5), strides=(2, 2), activation='relu', name="conv2d_3")(x)
+    x = Convolution2D(32, (5, 5), strides=(2, 2), activation="relu", name="conv2d_3")(x)
     x = Dropout(drop)(x)
-    x = Convolution2D(32, (3, 3), strides=(1, 1), activation='relu', name="conv2d_4")(x)
+    x = Convolution2D(32, (3, 3), strides=(1, 1), activation="relu", name="conv2d_4")(x)
     x = Dropout(drop)(x)
-    x = Convolution2D(32, (3, 3), strides=(1, 1), activation='relu', name="conv2d_5")(x)
+    x = Convolution2D(32, (3, 3), strides=(1, 1), activation="relu", name="conv2d_5")(x)
     x = Dropout(drop)(x)
-    x = Convolution2D(64, (3, 3), strides=(2, 2), activation='relu', name="conv2d_6")(x)
+    x = Convolution2D(64, (3, 3), strides=(2, 2), activation="relu", name="conv2d_6")(x)
     x = Dropout(drop)(x)
-    x = Convolution2D(64, (3, 3), strides=(2, 2), activation='relu', name="conv2d_7")(x)
+    x = Convolution2D(64, (3, 3), strides=(2, 2), activation="relu", name="conv2d_7")(x)
     x = Dropout(drop)(x)
-    x = Convolution2D(64, (1, 1), strides=(2, 2), activation='relu', name="latent")(x)
+    x = Convolution2D(64, (1, 1), strides=(2, 2), activation="relu", name="latent")(x)
 
     y = Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=2, name="deconv2d_1")(x)
     y = Conv2DTranspose(filters=64, kernel_size=(3, 3), strides=2, name="deconv2d_2")(y)
@@ -798,17 +804,17 @@ def default_latent(num_outputs, input_shape):
     y = Conv2DTranspose(filters=32, kernel_size=(3, 3), strides=2, name="deconv2d_5")(y)
     y = Conv2DTranspose(filters=1, kernel_size=(3, 3), strides=2, name="img_out")(y)
 
-    x = Flatten(name='flattened')(x)
-    x = Dense(256, activation='relu')(x)
+    x = Flatten(name="flattened")(x)
+    x = Dense(256, activation="relu")(x)
     x = Dropout(drop)(x)
-    x = Dense(100, activation='relu')(x)
+    x = Dense(100, activation="relu")(x)
     x = Dropout(drop)(x)
-    x = Dense(50, activation='relu')(x)
+    x = Dense(50, activation="relu")(x)
     x = Dropout(drop)(x)
 
     outputs = [y]
     for i in range(num_outputs):
-        outputs.append(Dense(1, activation='linear', name='n_outputs' + str(i))(x))
+        outputs.append(Dense(1, activation="linear", name="n_outputs" + str(i))(x))
 
     model = Model(inputs=[img_in], outputs=outputs)
     return model
