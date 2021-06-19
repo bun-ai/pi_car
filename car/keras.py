@@ -73,9 +73,7 @@ class KerasPilot(ABC):
         assert self.model, "Model not set"
         return self.model.inputs[0].shape
 
-    def run(
-        self, img_arr: np.ndarray, other_arr: np.ndarray = None
-    ) -> Tuple[Union[float, np.ndarray], ...]:
+    def run(self, img_arr: np.ndarray, other_arr: np.ndarray = None) -> Tuple[Union[float, np.ndarray], ...]:
         """
         Donkeycar parts interface to run the part in the loop.
 
@@ -89,9 +87,7 @@ class KerasPilot(ABC):
         return self.inference(norm_arr, other_arr)
 
     @abstractmethod
-    def inference(
-        self, img_arr: np.ndarray, other_arr: np.ndarray
-    ) -> Tuple[Union[float, np.ndarray], ...]:
+    def inference(self, img_arr: np.ndarray, other_arr: np.ndarray) -> Tuple[Union[float, np.ndarray], ...]:
         """
         Virtual method to be implemented by child classes for inferencing
 
@@ -103,19 +99,18 @@ class KerasPilot(ABC):
         """
         pass
 
-    def train(
-        self,
-        model_path: str,
-        train_data: "BatchSequence",
-        train_steps: int,
-        batch_size: int,
-        validation_data: "BatchSequence",
-        validation_steps: int,
-        epochs: int,
-        verbose: int = 1,
-        min_delta: float = 0.0005,
-        patience: int = 5,
-    ) -> tf.keras.callbacks.History:
+    def train(self,
+              model_path: str,
+              train_data: 'BatchSequence',
+              train_steps: int,
+              batch_size: int,
+              validation_data: 'BatchSequence',
+              validation_steps: int,
+              epochs: int,
+              verbose: int = 1,
+              min_delta: float = 0.0005,
+              patience: int = 5,
+              ) -> tf.keras.callbacks.History:
         """
         trains the model
         """

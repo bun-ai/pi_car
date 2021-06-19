@@ -49,3 +49,24 @@ CAMERA_HFLIP = False
 # RECORD OPTIONS
 RECORD_DURING_AI = False
 AUTO_CREATE_NEW_TUB = False     # create a new tub (tub_YY_MM_DD) directory when recording or append records to data directory directly
+
+# TRAINING
+DEFAULT_MODEL_TYPE = 'linear'   # (linear|categorical|rnn|imu|behavior|3d|localizer|latent)
+BATCH_SIZE = 128
+TRAIN_TEST_SPLIT = 0.8
+MAX_EPOCHS = 100
+# SHOW_PLOT = True
+VERBOSE_TRAIN = True
+USE_EARLY_STOP = True
+EARLY_STOP_PATIENCE = 5
+MIN_DELTA = .0005
+PRINT_MODEL_SUMMARY = True        # print layers and weights to stdout
+# OPTIMIZER = None                # adam, sgd, rmsprop, etc.. None accepts default
+# LEARNING_RATE = 0.001           # only used when OPTIMIZER specified
+# LEARNING_RATE_DECAY = 0.0       # only used when OPTIMIZER specified
+# CACHE_IMAGES = True             # keep images in memory. will speed successive epochs, but crater if not enough mem.
+# PRUNE_CNN = False
+# PRUNE_PERCENT_TARGET = 75 # The desired percentage of pruning.
+# PRUNE_PERCENT_PER_ITERATION = 20 # Percentage of pruning that is perform per iteration.
+# PRUNE_VAL_LOSS_DEGRADATION_LIMIT = 0.2 # The max amount of validation loss that is permitted during pruning.
+# PRUNE_EVAL_PERCENT_OF_DATASET = .05  # percent of dataset used to perform evaluation of model.1

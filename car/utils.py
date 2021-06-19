@@ -195,7 +195,7 @@ def get_model_by_type(model_type: str, cfg: 'Config') -> 'KerasPilot':
     create a Keras model and return it.
     """
     from car.keras import KerasPilot, KerasCategorical, KerasLinear, KerasInferred
-    from donkeycar.parts.tflite import TFLitePilot
+    from car.tflite import TFLitePilot
 
     if model_type is None:
         model_type = cfg.DEFAULT_MODEL_TYPE
@@ -212,12 +212,12 @@ def get_model_by_type(model_type: str, cfg: 'Config') -> 'KerasPilot':
         kl = KerasInferred(input_shape=input_shape)
     elif model_type == "tflite_linear":
         kl = TFLitePilot()
-    elif model_type == "tensorrt_linear":
-        # Aggressively lazy load this. This module imports pycuda.autoinit
-        # which causes a lot of unexpected things to happen when using TF-GPU
-        # for training.
-        from donkeycar.parts.tensorrt import TensorRTLinear
-        kl = TensorRTLinear(cfg=cfg)
+    # elif model_type == "tensorrt_linear":
+    #     # Aggressively lazy load this. This module imports pycuda.autoinit
+    #     # which causes a lot of unexpected things to happen when using TF-GPU
+    #     # for training.
+    #     from car.parts.tensorrt import TensorRTLinear
+    #     kl = TensorRTLinear(cfg=cfg)
     else:
         raise Exception("Unknown model type {:}, supported types are "
                         "linear, categorical, inferred, tflite_linear, "
