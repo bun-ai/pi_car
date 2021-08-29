@@ -130,3 +130,10 @@ def train(cfg: Config, tub_paths: str, model: str, model_type: str) \
         keras_model_to_tflite(output_path, tf_lite_model_path)
 
     return history
+
+
+if __name__ == '__main__':
+    from car.config import load_config
+    cfg = load_config('/home/alex/PycharmProjects/pi_car/car/config.py')
+
+    train(cfg, '/home/alex/car_data/02.05.21/', '/home/alex/car_data/models/', 'linear')

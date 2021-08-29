@@ -90,9 +90,3 @@ class TubDataset(object):
 
         return train_test_split(self.records, shuffle=self.shuffle,
                                 test_size=(1. - self.config.TRAIN_TEST_SPLIT))
-
-
-if __name__ == '__main__':
-    cfg = ()
-
-    drive(cfg)
