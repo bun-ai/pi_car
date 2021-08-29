@@ -841,9 +841,9 @@ class JoystickController(object):
         self.on_throttle_changes()
 
     @staticmethod
-    def write_for_rgb_cooling_hat(var, value):
-        with open('/home/pi/projects/pi_car/car/hat_info', 'w') as f:
-            f.write(f'{var}: {value}')
+    def write_for_rgb_cooling_hat(var, value, filename):
+        with open(f'/home/pi/RGB_Cooling_HAT/pi_car_info/{filename}', 'w+') as f:
+            f.write(f'{var}:{value}')
 
     def toggle_manual_recording(self):
         """
@@ -859,7 +859,7 @@ class JoystickController(object):
             self.recording = True
             on_off = 'ON'
 
-        self.write_for_rgb_cooling_hat('RECORD', on_off)
+        self.write_for_rgb_cooling_hat('REC', on_off, 'recording')
         print("recording:", self.recording)
 
     def increase_max_throttle(self):
@@ -875,7 +875,7 @@ class JoystickController(object):
                 self.throttle_dir * self.last_throttle_axis_val * self.throttle_scale
             )
 
-        self.write_for_rgb_cooling_hat('Throttle_scale', self.throttle_scale)
+        self.write_for_rgb_cooling_hat('Scale', self.throttle_scale, 'throttle_scale')
         print("throttle_scale:", self.throttle_scale)
 
     def decrease_max_throttle(self):
@@ -891,7 +891,7 @@ class JoystickController(object):
                 self.throttle_dir * self.last_throttle_axis_val * self.throttle_scale
             )
 
-        self.write_for_rgb_cooling_hat('Throttle_scale', self.throttle_scale)
+        self.write_for_rgb_cooling_hat('Scale', self.throttle_scale, 'throttle_scale')
         print("throttle_scale:", self.throttle_scale)
 
     def toggle_constant_throttle(self):
