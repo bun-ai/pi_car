@@ -1,7 +1,11 @@
 import cv2
 import numpy as np
+import logging
 import imgaug.augmenters as iaa
 from car.config import Config
+
+
+logger = logging.getLogger(__name__)
 
 
 class Augmentations(object):
@@ -12,7 +16,7 @@ class Augmentations(object):
     @classmethod
     def crop(cls, left, right, top, bottom, keep_size=False):
         """
-        The image augmentation sequence.
+        The image augumentation sequence.
         Crops based on a region of interest among other things.
         left, right, top & bottom are the number of pixels to crop.
         """
@@ -56,7 +60,8 @@ class Augmentations(object):
 
             return transformed
 
-        def _transform_keypoints(keypoints_on_images, random_state, parents, hooks):
+        def _transform_keypoints(keypoints_on_images, random_state,
+                                 parents, hooks):
             # No-op
             return keypoints_on_images
 
@@ -66,19 +71,32 @@ class Augmentations(object):
 
 
 class ImageAugmentation:
-    def __init__(self, cfg):
-        aug_list = getattr(cfg, 'AUGMENTATIONS', [])
+    def __init__(self, cfg, key):
+        aug_list = getattr(cfg, key, [])
         augmentations = [ImageAugmentation.create(a, cfg) for a in aug_list]
         self.augmentations = iaa.Sequential(augmentations)
 
     @classmethod
     def create(cls, aug_type: str, config: Config) -> iaa.meta.Augmenter:
+        """ Augmenatition factory. Cropping and trapezoidal mask are
+            transfomations which should be applied in training, validation and
+            inference. Multiply, Blur and similar are augmentations which should
+            be used only in training. """
+
         if aug_type == 'CROP':
-            return Augmentations.crop(left=config.ROI_CROP_TOP,
-                                      right=config.ROI_CROP_TOP,
+            logger.info(f'Creating augmentation {aug_type} with ROI_CROP ' 
+                        f'L: {config.ROI_CROP_LEFT}, '
+                        f'R: {config.ROI_CROP_RIGHT}, '
+                        f'B: {config.ROI_CROP_BOTTOM}, ' 
+                        f'T: {config.ROI_CROP_TOP}')
+
+            return Augmentations.crop(left=config.ROI_CROP_LEFT,
+                                      right=config.ROI_CROP_RIGHT,
                                       bottom=config.ROI_CROP_BOTTOM,
-                                      top=config.ROI_CROP_TOP)
+                                      top=config.ROI_CROP_TOP,
+                                      keep_size=True)
         elif aug_type == 'TRAPEZE':
+            logger.info(f'Creating augmentation {aug_type}')
             return Augmentations.trapezoidal_mask(
                         lower_left=config.ROI_TRAPEZE_LL,
                         lower_right=config.ROI_TRAPEZE_LR,
@@ -89,12 +107,15 @@ class ImageAugmentation:
 
         elif aug_type == 'MULTIPLY':
             interval = getattr(config, 'AUG_MULTIPLY_RANGE', (0.5, 1.5))
+            logger.info(f'Creating augmentation {aug_type} {interval}')
             return iaa.Multiply(interval)
 
         elif aug_type == 'BLUR':
             interval = getattr(config, 'AUG_BLUR_RANGE', (0.0, 3.0))
+            logger.info(f'Creating augmentation {aug_type} {interval}')
             return iaa.GaussianBlur(sigma=interval)
 
-    def augment(self, img_arr):
+    # Parts interface
+    def run(self, img_arr):
         aug_img_arr = self.augmentations.augment_image(img_arr)
         return aug_img_arr
