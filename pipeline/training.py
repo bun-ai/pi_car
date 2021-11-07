@@ -131,9 +131,8 @@ def train(cfg: Config, tub_paths: str, model: str, model_type: str) \
 
     return history
 
-
 if __name__ == '__main__':
     from car.config import load_config
     cfg = load_config('/home/alex/PycharmProjects/pi_car/car/config.py')
 
-    train(cfg, '/home/alex/car_data/02.05.21/', '/home/alex/car_data/models/', 'linear')
+    train(cfg, '/home/alex/laptop/car_data/2021-10-09/', '/home/alex/laptop/car_data/models/', 'linear')
