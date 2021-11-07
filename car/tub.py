@@ -63,6 +63,7 @@ class Tub(object):
         # Private properties
         contents['_timestamp_ms'] = int(round(time.time() * 1000))
         contents['_index'] = self.manifest.current_index
+        contents['_session_id'] = self.manifest.session_id
 
         self.manifest.write_record(contents)
 
@@ -77,6 +78,9 @@ class Tub(object):
                 continue
             else:
                 self.manifest.delete_record(index)
+
+    def restore_record(self, record_index):
+        self.manifest.restore_record(record_index)
 
     def close(self):
         self.manifest.close()
@@ -148,7 +152,7 @@ class TubWriter(object):
         atexit.register(shutdown_hook)
 
     def run(self, *args):
-        assert len(self.tub.inputs) == len(args)
+        assert len(self.tub.inputs) == len(args), f'Expected {len(self.tub.inputs)} inputs but received {len(args)}'
         record = dict(zip(self.tub.inputs, args))
         self.tub.write_record(record)
         return self.tub.manifest.current_index
@@ -157,4 +161,7 @@ class TubWriter(object):
         return self.tub.__iter__()
 
     def close(self):
-        self.tub.manifest.close()
+        self.tub.close()
+
+    def shutdown(self):
+        self.close()

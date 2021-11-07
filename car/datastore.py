@@ -165,7 +165,7 @@ class CatalogMetadata(object):
 
     def __init__(self, catalog_path, read_only=False, start_index=0):
         path = Path(catalog_path)
-        manifest_name = '%s.catalog_manifest' % path.stem
+        manifest_name = f'{path.stem}.catalog_manifest'
         self.manifest_path = Path(os.path.join(path.parent.as_posix(), manifest_name))
         self.seekable = Seekable(self.manifest_path, read_only=read_only)
         has_contents = False
@@ -231,6 +231,7 @@ class Manifest(object):
         self.catalog_paths = list()
         self.catalog_metadata = dict()
         self.deleted_indexes = set()
+        self._got_updated = False
         has_catalogs = False
 
         if self.manifest_path.exists():
@@ -243,7 +244,7 @@ class Manifest(object):
             self.manifest_metadata['created_at'] = created_at
             if not self.base_path.exists():
                 self.base_path.mkdir(parents=True, exist_ok=True)
-                print('Created a new datastore at %s' % (self.base_path.as_posix()))
+                print(f'Created a new datastore at {self.base_path.as_posix()}')
             self.seekable = Seekable(self.manifest_path, read_only=self.read_only)
 
         if not has_catalogs:
@@ -251,8 +252,10 @@ class Manifest(object):
             self._add_catalog()
         else:
             last_known_catalog = os.path.join(self.base_path, self.catalog_paths[-1])
-            print('Using catalog %s' % last_known_catalog)
+            print(f'Using catalog {last_known_catalog}')
             self.current_catalog = Catalog(last_known_catalog, read_only=self.read_only, start_index=self.current_index)
+
+        self.session_id = self.create_session_id()
 
     def write_record(self, record):
         new_catalog = self.current_index > 0 and (self.current_index % self.max_len) == 0
@@ -263,15 +266,21 @@ class Manifest(object):
         self.current_index += 1
         # Update metadata to keep track of the last index
         self._update_catalog_metadata(update=True)
+        self._got_updated = True
 
     def delete_record(self, record_index):
         # Does not actually delete the record, but marks it as deleted.
         self.deleted_indexes.add(record_index)
         self._update_catalog_metadata(update=True)
 
+    def restore_record(self, record_index):
+        # Does not actually delete the record, but marks it as deleted.
+        self.deleted_indexes.discard(record_index)
+        self._update_catalog_metadata(update=True)
+
     def _add_catalog(self):
         current_length = len(self.catalog_paths)
-        catalog_name = 'catalog_%s.catalog' % current_length
+        catalog_name = f'catalog_{current_length}.catalog'
         catalog_path = os.path.join(self.base_path, catalog_name)
         current_catalog = self.current_catalog
         self.current_catalog = Catalog(catalog_path, start_index=self.current_index, read_only=self.read_only)
@@ -319,7 +328,36 @@ class Manifest(object):
         self.catalog_metadata = catalog_metadata
         self.seekable.write_line(json.dumps(catalog_metadata))
 
+    def _write_metadata_contents(self):
+        self.seekeable.truncate_until_end(2)
+        self.seekeable.writeline(json.dumps(self.metadata))
+
+    def create_session_id(self):
+        """ Creates a new session id and appends it to the metadata."""
+        last_session_id = None
+        last_session_ids = self.manifest_metadata.get('session_ids')
+        if last_session_ids:
+            last_session_id = last_session_ids[-1]
+        last_num = -1
+        if last_session_id:
+            session_id_parts = last_session_id.split('_')
+            if len(session_id_parts) == 2 \
+                    and session_id_parts[1].isnumeric() \
+                    and len(session_id_parts[0].split('-')) == 3:
+                last_num = int(session_id_parts[1])
+        tub_num = last_num + 1
+        date = time.strftime('%y-%m-%d')
+        session_id = date + '_' + str(tub_num)
+        if last_session_ids:
+            last_session_ids.append(session_id)
+        else:
+            self.manifest_metadata['session_ids'] = [session_id]
+        return session_id
+
     def close(self):
+        # if records were received, write updated the metadata
+        if self._got_updated:
+            self._write_contents()
         self.current_catalog.close()
         self.seekable.close()
 

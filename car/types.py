@@ -78,15 +78,18 @@ class TubDataset(object):
         self.tubs: List[Tub] = [Tub(tub_path, read_only=True)
                                 for tub_path in self.tub_paths]
         self.records: List[TubRecord] = list()
+        self.train_filter = getattr(config, 'TRAIN_FILTER', None)
 
     def train_test_split(self) -> Tuple[List[TubRecord], List[TubRecord]]:
-        print(f'Loading tubs from paths {self.tub_paths}')
+        msg = f'Loading tubs from paths {self.tub_paths}' \
+              f' with filter {self.train_filter}' if self.train_filter else ''
+        print(msg)
         self.records.clear()
         for tub in self.tubs:
             for underlying in tub:
-                record = TubRecord(self.config, tub.base_path,
-                                   underlying=underlying)
-                self.records.append(record)
+                record = TubRecord(self.config, tub.base_path, underlying=underlying)
+                if not self.train_filter or self.train_filter(record):
+                    self.records.append(record)
 
         return train_test_split(self.records, shuffle=self.shuffle,
                                 test_size=(1. - self.config.TRAIN_TEST_SPLIT))
